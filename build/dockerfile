@@ -4,8 +4,8 @@ RUN useradd -d /home/mario -m -s /bin/bash mario
 
 COPY words /usr/local/tomcat/webapps/
 
-USER mario
-
 RUN apt-get update && apt-get install -y vim
+
+USER mario
 
 CMD catalina.sh run
