@@ -25,8 +25,8 @@ func TestNewTester(t *testing.T) {
 		t.Errorf("Failed to test file %s", tests)
 	}
 
-	if blockNum := len(tests.testBlocks); blockNum != 8 {
-		t.Errorf("Expected 8 blocks, found %d", blockNum)
+	if blockNum := len(tests.testBlocks); blockNum != 9 {
+		t.Errorf("Expected 9 blocks, found %d", blockNum)
 	}
 }
 
@@ -50,6 +50,7 @@ func TestInjection(t *testing.T) {
 		//		{Args: []string{"EPHEMERAL",  "bash", "-c", "test \"$(dpkg-query -W -f='${Status}' vim)\" = \"install ok installed\""}},
 		{Args: []string{"CMD", "catalina.sh", "run"}},
 		{Args: []string{"EPHEMERAL", "bash", "-c", "pidof java"}},
+		{Args: []string{"EPHEMERAL", "bash", "-c", "grep admin /etc/passwd"}},
 	}
 
 	const (
