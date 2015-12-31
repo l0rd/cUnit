@@ -41,11 +41,11 @@ func TestShellParser(t *testing.T) {
 		newWord, err := processShellWord(words[0], envs)
 
 		if err != nil {
-		 	newWord = "error"
+			newWord = "error"
 		}
 
 		if newWord != words[1] {
-		 	t.Fatalf("Error. Src: %s  Calc: %s  Expected: %s", words[0], newWord, words[1])
+			t.Fatalf("Error. Src: %s  Calc: %s  Expected: %s", words[0], newWord, words[1])
 		}
 	}
 }
