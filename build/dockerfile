@@ -6,6 +6,8 @@ COPY words /usr/local/tomcat/webapps/
 
 USER mario
 
+RUN bash -c 'echo bar >> /tmp/foo.txt'
+
 RUN apt-get update && apt-get install -y vim
 
 CMD catalina.sh run

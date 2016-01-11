@@ -25,8 +25,8 @@ func TestNewTester(t *testing.T) {
 		t.Errorf("Failed to test file %s", tests)
 	}
 
-	if blockNum := len(tests.testBlocks); blockNum != 7 {
-		t.Errorf("Expected 7 blocks, found %d", blockNum)
+	if blockNum := len(tests.testBlocks); blockNum != 8 {
+		t.Errorf("Expected 8 blocks, found %d", blockNum)
 	}
 }
 
@@ -40,14 +40,16 @@ func TestInjection(t *testing.T) {
 		{Args: []string{"EPHEMERAL", "bash", "-c", "test ! -f /usr/local/tomcat/webapps/words"}},
 		{Args: []string{"COPY", "words", "/usr/local/tomcat/webapps/"}},
 		{Args: []string{"EPHEMERAL", "bash", "-c", "test -f /usr/local/tomcat/webapps/words"}},
-		{Args: []string{"EPHEMERAL",  "bash", "-c", "test $(whoami) = \"root\""}},
+		{Args: []string{"EPHEMERAL", "bash", "-c", "test $(whoami) = \"root\""}},
 		{Args: []string{"USER", "mario"}},
-		{Args: []string{"EPHEMERAL",  "bash", "-c", "test $(whoami) = \"mario\""}},
-//		{Args: []string{"EPHEMERAL",  "bash", "-c", "test ! \"$(dpkg-query -W -f='${Status}' vim)\" = \"install ok installed\""}},
-		{Args: []string{"EPHEMERAL",  "bash", "-c", "! command -v \"vim\"  1>/dev/null 2>&1"}},
+		{Args: []string{"EPHEMERAL", "bash", "-c", "test $(whoami) = \"mario\""}},
+		{Args: []string{"RUN", "bash", "-c", "echo bar >> /tmp/foo.txt"}},
+		{Args: []string{"EPHEMERAL", "bash", "-c", "grep -q bar /tmp/foo.txt"}},
+		//		{Args: []string{"EPHEMERAL",  "bash", "-c", "test ! \"$(dpkg-query -W -f='${Status}' vim)\" = \"install ok installed\""}},
+		{Args: []string{"EPHEMERAL", "bash", "-c", "! command -v \"vim\"  1>/dev/null 2>&1"}},
 		{Args: []string{"RUN", "apt-get", "update", "&&", "apt-get", "install", "-y", "vim"}},
-		{Args: []string{"EPHEMERAL",  "bash", "-c", "command -v \"vim\"  1>/dev/null 2>&1"}},
-//		{Args: []string{"EPHEMERAL",  "bash", "-c", "test \"$(dpkg-query -W -f='${Status}' vim)\" = \"install ok installed\""}},
+		{Args: []string{"EPHEMERAL", "bash", "-c", "command -v \"vim\"  1>/dev/null 2>&1"}},
+		//		{Args: []string{"EPHEMERAL",  "bash", "-c", "test \"$(dpkg-query -W -f='${Status}' vim)\" = \"install ok installed\""}},
 		{Args: []string{"CMD", "catalina.sh", "run"}},
 	}
 

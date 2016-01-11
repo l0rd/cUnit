@@ -172,8 +172,8 @@ func Assert2Ephemeral(command *parser.Command) (*parser.Command, error) {
 		}
 		test += "-f " + command.Args[2]
 		ephemeral.Args = append(ephemeral.Args, test)
-    
-    case "CURRENT_USER_IS":
+
+	case "CURRENT_USER_IS":
 		if len(command.Args) != 3 {
 			return nil, fmt.Errorf("Condition %s accept one and only one argument (found %d)", "CURRENT_USER_IS", len(command.Args)-2)
 		}
@@ -182,7 +182,7 @@ func Assert2Ephemeral(command *parser.Command) (*parser.Command, error) {
 		if command.Args[0] == commands.AssertFalse {
 			test += "! "
 		}
-		test += "$(whoami) = \"" + command.Args[2] + "\"" 
+		test += "$(whoami) = \"" + command.Args[2] + "\""
 		ephemeral.Args = append(ephemeral.Args, test)
 
 	case "IS_INSTALLED":
@@ -194,12 +194,23 @@ func Assert2Ephemeral(command *parser.Command) (*parser.Command, error) {
 		if command.Args[0] == commands.AssertFalse {
 			test += "! "
 		}
-        test += isInstalledGeneric(command.Args[2])
+		test += isInstalledGeneric(command.Args[2])
 		ephemeral.Args = append(ephemeral.Args, test)
-    
+
+  case "FILE_CONTAINS":
+    if len(command.Args) != 4 {
+        return nil, fmt.Errorf("Condition %s accept two and only two argument (found %d)", "FILE_CONTAINS", len(command.Args)-3)
+    }
+    ephemeral.Args = append(ephemeral.Args, "bash", "-c")
+    test := "grep -q "
+    if command.Args[0] == commands.AssertFalse {
+		test += "! "
+    }
+    test += command.Args[2] + " " + command.Args[3]
+    ephemeral.Args = append(ephemeral.Args, test)
 
 	default:
-		return nil, fmt.Errorf("Condition %s is not supported. Only %s, %s, %s and %s are currently supported. Please open an issue if you want to add support for it.", command.Args[1], "USER_EXISTS", "FILE_EXISTS", "CURRENT_USER_IS", "IS_INSTALLED")
+		return nil, fmt.Errorf("Condition %s is not supported. Only %s, %s, %s and %s are currently supported. Please open an issue if you want to add support for it.", command.Args[1], "USER_EXISTS", "FILE_EXISTS", "CURRENT_USER_IS", "IS_INSTALLED", "FILE_CONTAINS")
 	}
 
 	return ephemeral, nil
@@ -222,10 +233,10 @@ func PrintTestsStats(stats *TestStats) {
 
 // func isInstalledDebian(packagename string) string {
 //     return "\"$(dpkg-query -W -f='${Status}' " +
-//            packagename + 
+//            packagename +
 //            ")\" = \"install ok installed\""
 // }
 
 func isInstalledGeneric(packagename string) string {
-    return "command -v \"" + packagename + "\"  1>/dev/null 2>&1"
+	return "command -v \"" + packagename + "\"  1>/dev/null 2>&1"
 }
