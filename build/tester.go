@@ -1,10 +1,14 @@
 package build
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
+	log "github.com/Sirupsen/logrus"
+	dockerclient2 "github.com/fsouza/go-dockerclient"
 	"github.com/l0rd/docker-unit/build/commands"
 	"github.com/l0rd/docker-unit/build/parser"
 )
@@ -57,8 +61,8 @@ func newTester(testfilepath string) (*DockerfileTests, error) {
 
 		cmd, args := strings.ToUpper(fullcmd.Args[0]), fullcmd.Args[1:]
 
-		if (i == 0) && ((cmd != commands.Before) && (cmd != commands.After)) {
-			return nil, fmt.Errorf("Tests blocks should start with a %s or %s command (found %s instead)", commands.Before, commands.After, cmd)
+		if (i == 0) && ((cmd != commands.Before) && (cmd != commands.After) && (cmd != commands.AfterRun)) {
+			return nil, fmt.Errorf("Tests blocks should start with a %s, %s or %s command (found %s instead)", commands.Before, commands.After, commands.AfterRun, cmd)
 		}
 
 		if _, newTestBlock := commands.NewTestBlock[cmd]; newTestBlock {
@@ -68,10 +72,14 @@ func newTester(testfilepath string) (*DockerfileTests, error) {
 			}
 
 			currentTestBlock = &TestBlock{
-				Position:      cmd,
-				DockerfileRef: args[0],
-				Asserts:       make([]parser.Command, 0),
-				Ephemerals:    make([]parser.Command, 0),
+				Position: cmd,
+				//DockerfileRef: args[0],
+				Asserts:    make([]parser.Command, 0),
+				Ephemerals: make([]parser.Command, 0),
+			}
+
+			if len(args) > 0 {
+				currentTestBlock.DockerfileRef = args[0]
 			}
 
 		} else {
@@ -196,21 +204,34 @@ func Assert2Ephemeral(command *parser.Command) (*parser.Command, error) {
 		}
 		test += isInstalledGeneric(command.Args[2])
 		ephemeral.Args = append(ephemeral.Args, test)
+	case "FILE_CONTAINS":
+		if len(command.Args) != 4 {
+			return nil, fmt.Errorf("Condition %s accept two and only two argument (found %d)", "FILE_CONTAINS", len(command.Args)-3)
+		}
+		ephemeral.Args = append(ephemeral.Args, "bash", "-c")
+		test := "grep -q "
+		if command.Args[0] == commands.AssertFalse {
+			test += "! "
+		}
+		test += command.Args[2] + " " + command.Args[3]
+		ephemeral.Args = append(ephemeral.Args, test)
 
-  case "FILE_CONTAINS":
-    if len(command.Args) != 4 {
-        return nil, fmt.Errorf("Condition %s accept two and only two argument (found %d)", "FILE_CONTAINS", len(command.Args)-3)
-    }
-    ephemeral.Args = append(ephemeral.Args, "bash", "-c")
-    test := "grep -q "
-    if command.Args[0] == commands.AssertFalse {
-		test += "! "
-    }
-    test += command.Args[2] + " " + command.Args[3]
-    ephemeral.Args = append(ephemeral.Args, test)
+	case "PROCESS_EXISTS":
+		if len(command.Args) != 3 {
+			return nil, fmt.Errorf("Condition %s accept one and only one argument (found %d)", "PROCESS_EXISTS", len(command.Args)-2)
+		}
+		ephemeral.Args = append(ephemeral.Args, "sh", "-c")
+		test := ""
+		if command.Args[0] == commands.AssertFalse {
+			test += "! "
+		}
+		test += "ps cax | grep " + command.Args[2] + " > /dev/null"
+
+		isInstalledGeneric(command.Args[2])
+		ephemeral.Args = append(ephemeral.Args, test)
 
 	default:
-		return nil, fmt.Errorf("Condition %s is not supported. Only %s, %s, %s and %s are currently supported. Please open an issue if you want to add support for it.", command.Args[1], "USER_EXISTS", "FILE_EXISTS", "CURRENT_USER_IS", "IS_INSTALLED", "FILE_CONTAINS")
+		return nil, fmt.Errorf("Condition %s is not supported. Only %s, %s, %s, %s and %s are currently supported. Please open an issue if you want to add support for it.", command.Args[1], "USER_EXISTS", "FILE_EXISTS", "CURRENT_USER_IS", "IS_INSTALLED", "FILE_CONTAINS", "PROCESS_EXISTS")
 	}
 
 	return ephemeral, nil
@@ -239,4 +260,89 @@ func PrintTestsStats(stats *TestStats) {
 
 func isInstalledGeneric(packagename string) string {
 	return "command -v \"" + packagename + "\"  1>/dev/null 2>&1"
+}
+
+func (b *Builder) dispatchPostBuildTests() error {
+
+	for _, testblock := range b.dockerfileTests.testBlocks {
+		if testblock.Position == commands.AfterRun {
+			for _, ephemeral := range testblock.Ephemerals {
+				if err := b.handlePostBuildTest(ephemeral.Args[1:]); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func (b *Builder) handlePostBuildTest(args []string) error {
+
+	log.Debugf("handling post build test with args: %#v", args)
+
+	if len(args) < 1 {
+		return fmt.Errorf("%s requires at least one argument", commands.Run)
+	}
+
+	containerID, err := b.createContainer(b.config.Entrypoint, b.config.Cmd, true)
+	if err != nil {
+		return fmt.Errorf("unable to create container: %s", err)
+	}
+
+	if err := b.client.StartContainer(containerID, nil); err != nil {
+		return fmt.Errorf("unable to start container: %s", err)
+	}
+
+	delay := 10000 * time.Millisecond
+	fmt.Println("Sleeping..zzzzzz")
+	time.Sleep(delay)
+	fmt.Println("Wake up")
+
+	createExecConfig := dockerclient2.CreateExecOptions{
+		AttachStdin:  false,
+		AttachStdout: true,
+		AttachStderr: true,
+		Tty:          false,
+		Cmd:          args,
+		Container:    containerID,
+		User:         "",
+	}
+
+	createExecResult, err := b.client2.CreateExec(createExecConfig)
+	if err != nil {
+		return fmt.Errorf("unable to exec assert in running container: %s", err)
+	}
+
+	var stdout, stderr bytes.Buffer
+	startExecConfig := dockerclient2.StartExecOptions{
+		OutputStream: &stdout,
+		ErrorStream:  &stderr,
+		//InputStream:  nil,
+		RawTerminal: true,
+	}
+
+	err = b.client2.StartExec(createExecResult.ID, startExecConfig)
+	if err != nil {
+		return fmt.Errorf("unable to exec assert in running container: %s", err)
+	}
+
+	inspectResult, err := b.client2.InspectExec(createExecResult.ID)
+	if err != nil {
+		return fmt.Errorf("unable to exec assert in running container: %s", err)
+	}
+
+	if inspectResult.ExitCode != 0 {
+		return fmt.Errorf("assert \"%s\" failed, return code: %d", args, inspectResult.ExitCode)
+	}
+
+	if err := b.client.StopContainer(containerID, 1); err != nil {
+		return fmt.Errorf("unable to stop/kill container: %s", err)
+	}
+
+	err = b.client.RemoveContainer(containerID, true, true)
+	if err != nil {
+		return fmt.Errorf("unable to inspect container: %s", err)
+	}
+
+	return nil
 }

@@ -119,6 +119,10 @@ func TestAssert2Ephemeral(t *testing.T) {
 			parser.Command{Args: []string{"ASSERT_TRUE", "USER_EXISTS", "tomcat"}},
 			parser.Command{Args: []string{"EPHEMERAL", "getent", "passwd", "tomcat"}},
 		},
+		{
+			parser.Command{Args: []string{"ASSERT_TRUE", "PROCESS_EXISTS", "java"}},
+			parser.Command{Args: []string{"EPHEMERAL", "sh", "-c", "ps cax | grep java > /dev/null"}},
+		},
 	}
 
 	for _, c := range cases {

@@ -26,8 +26,8 @@ ASSERT_FALSE USER_EXISTS 'mobydock'
 @AFTER USER_ADD
 ASSERT_TRUE USER_EXISTS 'mobydock'
 
-@DOCKER_RUN
-ASSERT_TRUE IS_RUNNING 'tomcat'
+@AFTER_RUN
+ASSERT_TRUE PROCESS_EXISTS 'java'
 ```
 To test the `Dockerfile`:
 ```sh
@@ -68,7 +68,7 @@ Tests templates are some pre-configured boolean conditions. The following tests-
  - `OS_VERSION_MATCH 'ubuntu 14.04 '`
  - `CURRENT_USER_IS 'mario'`
  - `IS_INSTALLED 'vim'`
- - `IS_RUNNING 'httpd'`
+ - `PROCESS_EXISTS 'httpd'`
  - `IS_LISTENING_ON_PORT 80`
  - `USER_EXISTS 'mario'`
  - `FILE_CONTAINS 'a sentence'`

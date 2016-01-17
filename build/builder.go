@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	dockerclient2 "github.com/fsouza/go-dockerclient"
 	"github.com/l0rd/docker-unit/build/commands"
 	"github.com/l0rd/docker-unit/build/parser"
 	"github.com/l0rd/docker-unit/build/util"
@@ -47,6 +48,7 @@ type Builder struct {
 	daemonURL           string
 	tlsConfig           *tls.Config
 	client              *dockerclient.DockerClient
+	client2             *dockerclient2.Client
 	contextDirectory    string
 	dockerfilePath      string
 	dockerTestfilePath  string
@@ -112,10 +114,16 @@ func NewBuilder(daemonURL string, tlsConfig *tls.Config, contextDirectory, docke
 		return nil, fmt.Errorf("unable to initialize client: %s", err)
 	}
 
+	client2, err := dockerclient2.NewClientFromEnv()
+	if err != nil {
+		return nil, fmt.Errorf("unable to initialize client2: %s", err)
+	}
+
 	b := &Builder{
 		daemonURL:          daemonURL,
 		tlsConfig:          tlsConfig,
 		client:             client,
+		client2:            client2,
 		contextDirectory:   contextDirectory,
 		dockerfilePath:     dockerfilePath,
 		dockerTestfilePath: dockerTestfilePath,
@@ -237,6 +245,10 @@ func (b *Builder) Run() error {
 	}
 
 	fmt.Fprintf(b.out, "Successfully built %s\n", imageName)
+
+	if err := b.dispatchPostBuildTests(); err != nil {
+		return err
+	}
 
 	return nil
 }

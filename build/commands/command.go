@@ -5,6 +5,7 @@ package commands
 const (
 	Add         = "ADD"
 	After       = "@AFTER"
+	AfterRun    = "@AFTER_RUN"
 	AssertTrue  = "ASSERT_TRUE"
 	AssertFalse = "ASSERT_FALSE"
 	Before      = "@BEFORE"
@@ -29,6 +30,7 @@ const (
 var Commands = map[string]struct{}{
 	Add:         {},
 	After:       {},
+	AfterRun:    {},
 	AssertTrue:  {},
 	AssertFalse: {},
 	Before:      {},
@@ -72,12 +74,10 @@ var ReplaceEnvAllowed = map[string]struct{}{
 	Workdir: {},
 }
 
-var TestAssert = map[string]struct{}{
-	AssertTrue:  {},
-	AssertFalse: {},
-}
-
+// NewTestBlock is a subset of test files commands that are used
+// to the start a new test block
 var NewTestBlock = map[string]struct{}{
-	After:  {},
-	Before: {},
+	AfterRun: {},
+	After:    {},
+	Before:   {},
 }
