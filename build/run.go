@@ -23,7 +23,9 @@ func (b *Builder) handleRun(args []string, heredoc string) error {
 		b.uncommittedCommands = append(b.uncommittedCommands, fmt.Sprintf("RUN input: %q", heredoc))
 	}
 
-	if b.probeCache() {
+	// If it's EPHEMERAL uncommitted is == false
+    // and we don't need to probecache (instruction should always be executed)
+    if b.uncommitted == true && b.probeCache() {
 		return nil
 	}
 

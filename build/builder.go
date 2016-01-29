@@ -209,7 +209,7 @@ func (b *Builder) Run() error {
 			NumberOfTestFailed: 0,
 		}
 
-		defer PrintTestsStats(b.dockerfileTestStats)
+		defer printStats(*b)
 	}
 
 	for i, command := range commands {
@@ -283,11 +283,15 @@ func (b *Builder) dispatch(stepNum int, command *parser.Command) error {
 
 	fmt.Fprintf(b.out, "Step %d: %s\n", stepNum, commandStr)
 
-	b.uncommitted = true
-
 	if cmd != commands.Ephemeral {
+		b.uncommitted = true
 		b.uncommittedCommands = append(b.uncommittedCommands, commandStr)
 	} else {
+		// must set uncommitted = false
+		// to make it clear that it's an
+		// EPHEMERAL command when handler()
+		// is called
+		b.uncommitted = false
 		b.dockerfileTestStats.NumberOfTestRan += 1
 	}
 
@@ -335,4 +339,11 @@ func makeCommandString(cmd string, args ...string) string {
 	}
 
 	return fmt.Sprintf("%s %s", cmd, strings.Join(quotedArgs, " "))
+}
+
+func printStats(b Builder) {
+	fmt.Printf(fmt.Sprintln() +
+		fmt.Sprintln("----") +
+		b.TestsStatsString() +
+		fmt.Sprintln("\n----"))
 }

@@ -1,0 +1,26 @@
+[
+    {
+        "Dockerfile": "FROM tomcat:8.0.28-jre8\nENTRYPOINT catalina.sh\nCMD run",
+        "Dockertestfile": "@AFTER_RUN\nASSERT_TRUE PROCESS_EXISTS 'java'",
+        "Shouldfail": false,
+        "Stats": "Run 1 tests: 1 PASS and 0 FAIL"
+    },
+    {
+        "Dockerfile": "FROM tomcat:8.0.28-jre8\nENTRYPOINT catalina.sh\nCMD run",
+        "Dockertestfile": "@AFTER_RUN\nASSERT_TRUE PROCESS_EXISTS 'aprocessthatdoesnotexist'",
+        "Shouldfail": true,
+        "Stats": "Run 1 tests: 0 PASS and 1 FAIL"
+    },
+    {
+        "Dockerfile": "FROM tomcat:8.0.28-jre8\nENTRYPOINT catalina.sh\nCMD run",
+        "Dockertestfile": "@AFTER_RUN\nASSERT_FALSE PROCESS_EXISTS 'aprocessthatdoesnotexist'",
+        "Shouldfail": false,
+        "Stats": "Run 1 tests: 1 PASS and 0 FAIL"
+    },
+    {
+        "Dockerfile": "FROM tomcat:8.0.28-jre8\nENTRYPOINT catalina.sh\nCMD run",
+        "Dockertestfile": "@AFTER_RUN\nASSERT_FALSE PROCESS_EXISTS 'java'",
+        "Shouldfail": true,
+        "Stats": "Run 1 tests: 0 PASS and 1 FAIL"
+    }
+]

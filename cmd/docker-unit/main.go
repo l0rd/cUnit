@@ -45,24 +45,60 @@ func main() {
 	if *debug {
 		log.SetLevel(log.DebugLevel)
 	}
+    
+    docker := dockerClientConnection {
+        daemonURL: *daemonURL,
+        useTLS: *useTLS,
+        verifyTLS: *verifyTLS,
+        caCertFile: *caCertFile,
+        clientCertFile: *clientCertFile,
+        clientKeyFile: *clientKeyFile,
+    }
+    
+    getDockerClientConnection(&docker)
 
-	/********************************
+	/***************
+	 * Begin Build *
+	 ***************/
+
+	builder, err := build.NewBuilder(docker.daemonURL, docker.tlsConfig, *contextDirectory, *dockerfilePath, *repoTag)
+	if err != nil {
+		log.Fatalf("unable to initialize builder: %s", err)
+	}
+
+	if err := builder.Run(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+type dockerClientConnection struct {
+		daemonURL string
+		useTLS bool
+		verifyTLS bool
+		caCertFile string
+		clientCertFile string
+		clientKeyFile string
+        tlsConfig *tls.Config
+}
+
+func getDockerClientConnection(docker *dockerClientConnection) {
+    /********************************
 	 * Get Docker client connection *
 	 ********************************/
 
 	// Command line option takes preference, then fallback to environment var,
 	// then fallback to default.
-	if *daemonURL == "" {
-		if *daemonURL = os.Getenv("DOCKER_HOST"); *daemonURL == "" {
-			*daemonURL = defaultDockerSocket
+	if docker.daemonURL == "" {
+		if docker.daemonURL = os.Getenv("DOCKER_HOST"); docker.daemonURL == "" {
+			docker.daemonURL = defaultDockerSocket
 		}
 	}
 
 	// Setup TLS config.
-	var tlsConfig *tls.Config
-	if *useTLS || *verifyTLS || os.Getenv("DOCKER_TLS_VERIFY") != "" {
-		tlsConfig = &tls.Config{
-			InsecureSkipVerify: !*verifyTLS,
+	//var tlsConfig *tls.Config
+	if docker.useTLS || docker.verifyTLS || os.Getenv("DOCKER_TLS_VERIFY") != "" {
+		docker.tlsConfig = &tls.Config{
+			InsecureSkipVerify: !docker.verifyTLS,
 		}
 
 		// Get the cert path specified by environment variable or default.
@@ -73,73 +109,60 @@ func main() {
 		certDir = os.ExpandEnv(certDir)
 
 		// Get CA cert bundle.
-		if *caCertFile == "" { // Not set on command line.
-			*caCertFile = filepath.Join(certDir, defaultCACertFilename)
-			if _, err := os.Stat(*caCertFile); os.IsNotExist(err) {
+		if docker.caCertFile == "" { // Not set on command line.
+			docker.caCertFile = filepath.Join(certDir, defaultCACertFilename)
+			if _, err := os.Stat(docker.caCertFile); os.IsNotExist(err) {
 				// CA cert bundle does not exist in default location.
 				// We'll use the system default root CAs instead.
-				*caCertFile = ""
+				docker.caCertFile = ""
 			}
 		}
 
-		if *caCertFile != "" {
-			certBytes, err := ioutil.ReadFile(*caCertFile)
+		if docker.caCertFile != "" {
+			certBytes, err := ioutil.ReadFile(docker.caCertFile)
 			if err != nil {
 				log.Fatalf("unable to read ca cert file: %s", err)
 			}
 
-			tlsConfig.RootCAs = x509.NewCertPool()
-			if !tlsConfig.RootCAs.AppendCertsFromPEM(certBytes) {
+			docker.tlsConfig.RootCAs = x509.NewCertPool()
+			if !docker.tlsConfig.RootCAs.AppendCertsFromPEM(certBytes) {
 				log.Fatal("unable to load ca cert file")
 			}
 		}
 
 		// Get client cert.
-		if *clientCertFile == "" { // Not set on command line.
-			*clientCertFile = filepath.Join(certDir, defaultClientCertFilename)
-			if _, err := os.Stat(*clientCertFile); os.IsNotExist(err) {
+		if docker.clientCertFile == "" { // Not set on command line.
+			docker.clientCertFile = filepath.Join(certDir, defaultClientCertFilename)
+			if _, err := os.Stat(docker.clientCertFile); os.IsNotExist(err) {
 				// Client cert does not exist in default location.
-				*clientCertFile = ""
+				docker.clientCertFile = ""
 			}
 		}
 
 		// Get client key.
-		if *clientKeyFile == "" { // Not set on commadn line.
-			*clientKeyFile = filepath.Join(certDir, defaultClientKeyFilename)
-			if _, err := os.Stat(*clientKeyFile); os.IsNotExist(err) {
+		if docker.clientKeyFile == "" { // Not set on commadn line.
+			docker.clientKeyFile = filepath.Join(certDir, defaultClientKeyFilename)
+			if _, err := os.Stat(docker.clientKeyFile); os.IsNotExist(err) {
 				// Client key does not exist in default location.
-				*clientKeyFile = ""
+				docker.clientKeyFile = ""
 			}
 		}
 
 		// If one of client cert/key is specified then both must be.
-		certSpecified := *clientCertFile != ""
-		keySpecified := *clientKeyFile != ""
+		certSpecified := docker.clientCertFile != ""
+		keySpecified := docker.clientKeyFile != ""
 		if certSpecified != keySpecified {
 			log.Fatal("must specify both client certificate and key")
 		}
 
 		// If both are specified, load them into the tls config.
 		if certSpecified && keySpecified {
-			tlsClientCert, err := tls.LoadX509KeyPair(*clientCertFile, *clientKeyFile)
+			tlsClientCert, err := tls.LoadX509KeyPair(docker.clientCertFile, docker.clientKeyFile)
 			if err != nil {
 				log.Fatalf("unable to load client cert/key pair: %s", err)
 			}
 
-			tlsConfig.Certificates = append(tlsConfig.Certificates, tlsClientCert)
+			docker.tlsConfig.Certificates = append(docker.tlsConfig.Certificates, tlsClientCert)
 		}
-	}
-
-	/***************
-	 * Begin Build *
-	 ***************/
-
-	builder, err := build.NewBuilder(*daemonURL, tlsConfig, *contextDirectory, *dockerfilePath, *repoTag)
-	if err != nil {
-		log.Fatalf("unable to initialize builder: %s", err)
-	}
-
-	if err := builder.Run(); err != nil {
-		log.Fatal(err)
 	}
 }

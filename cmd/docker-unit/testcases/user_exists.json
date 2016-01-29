@@ -1,0 +1,26 @@
+[
+    {
+        "Dockerfile": "FROM debian\nRUN useradd -d /home/mario -m -s /bin/bash mario\n",
+        "Dockertestfile": "@AFTER RUN_USERADD\nASSERT_TRUE USER_EXISTS 'mario'\n",
+        "Shouldfail": false,
+        "Stats": "Run 1 tests: 1 PASS and 0 FAIL"
+    },
+    {
+        "Dockerfile": "FROM debian\nRUN useradd -d /home/mario -m -s /bin/bash mario\n",
+        "Dockertestfile": "@AFTER RUN_USERADD\nASSERT_TRUE USER_EXISTS 'notmario'\n",
+        "Shouldfail": true,
+        "Stats": "Run 1 tests: 0 PASS and 1 FAIL"
+    },
+    {
+        "Dockerfile": "FROM debian\n",
+        "Dockertestfile": "@AFTER FROM_DEBIAN\nASSERT_FALSE USER_EXISTS 'mario'\n",
+        "Shouldfail": false,
+        "Stats": "Run 1 tests: 1 PASS and 0 FAIL"
+    },
+    {
+        "Dockerfile": "FROM debian\nRUN useradd -d /home/mario -m -s /bin/bash mario\n",
+        "Dockertestfile": "@AFTER RUN_USERADD\nASSERT_FALSE USER_EXISTS 'mario'\n",
+        "Shouldfail": true,
+        "Stats": "Run 1 tests: 0 PASS and 1 FAIL"
+    }
+]

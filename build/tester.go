@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	log "github.com/Sirupsen/logrus"
 	dockerclient2 "github.com/fsouza/go-dockerclient"
@@ -167,7 +166,13 @@ func Assert2Ephemeral(command *parser.Command) (*parser.Command, error) {
 		if len(command.Args) != 3 {
 			return nil, fmt.Errorf("Condition %s accept one and only one argument (found %d)", "USER_EXISTS", len(command.Args)-2)
 		}
-		ephemeral.Args = append(ephemeral.Args, "getent", "passwd", command.Args[2])
+		ephemeral.Args = append(ephemeral.Args, "bash", "-c")
+		var test string
+		if command.Args[0] == commands.AssertFalse {
+			test = test + "! "
+		}
+		test += "getent passwd " + command.Args[2]
+		ephemeral.Args = append(ephemeral.Args, test)
 
 	case "FILE_EXISTS":
 		if len(command.Args) != 3 {
@@ -231,7 +236,7 @@ func Assert2Ephemeral(command *parser.Command) (*parser.Command, error) {
 		ephemeral.Args = append(ephemeral.Args, test)
 
 	default:
-		return nil, fmt.Errorf("Condition %s is not supported. Only %s, %s, %s, %s and %s are currently supported. Please open an issue if you want to add support for it.", command.Args[1], "USER_EXISTS", "FILE_EXISTS", "CURRENT_USER_IS", "IS_INSTALLED", "FILE_CONTAINS", "PROCESS_EXISTS")
+		return nil, fmt.Errorf("Condition %s is not supported. Only %s, %s, %s, %s, %s and %s are currently supported. Please open an issue if you want to add support for it.", command.Args[1], "USER_EXISTS", "FILE_EXISTS", "CURRENT_USER_IS", "IS_INSTALLED", "FILE_CONTAINS", "PROCESS_EXISTS")
 	}
 
 	return ephemeral, nil
@@ -245,11 +250,9 @@ func GetTotalNumberOfTests(tests *DockerfileTests) int {
 	return totalNumberOfTests
 }
 
-func PrintTestsStats(stats *TestStats) {
-	fmt.Println()
-	fmt.Println("----")
-	fmt.Printf("Run %d tests: %d PASS and %d FAIL\n", stats.NumberOfTestRan, stats.NumberOfTestPassed, stats.NumberOfTestFailed)
-	fmt.Println("----")
+func (b *Builder) TestsStatsString() (result string) {
+	result = fmt.Sprintf("Run %d tests: %d PASS and %d FAIL", b.dockerfileTestStats.NumberOfTestRan, b.dockerfileTestStats.NumberOfTestPassed, b.dockerfileTestStats.NumberOfTestFailed)
+	return result
 }
 
 // func isInstalledDebian(packagename string) string {
@@ -264,25 +267,30 @@ func isInstalledGeneric(packagename string) string {
 
 func (b *Builder) dispatchPostBuildTests() error {
 
-	for _, testblock := range b.dockerfileTests.testBlocks {
+	for i, testblock := range b.dockerfileTests.testBlocks {
 		if testblock.Position == commands.AfterRun {
 			for _, ephemeral := range testblock.Ephemerals {
-				if err := b.handlePostBuildTest(ephemeral.Args[1:]); err != nil {
+				b.dockerfileTestStats.NumberOfTestRan++
+				if err := b.handlePostBuildTest(i, ephemeral.Args[1:]); err != nil {
+					b.dockerfileTestStats.NumberOfTestFailed++
 					return err
 				}
+				b.dockerfileTestStats.NumberOfTestPassed++
 			}
 		}
 	}
 	return nil
 }
 
-func (b *Builder) handlePostBuildTest(args []string) error {
+func (b *Builder) handlePostBuildTest(index int, args []string) error {
 
 	log.Debugf("handling post build test with args: %#v", args)
 
 	if len(args) < 1 {
 		return fmt.Errorf("%s requires at least one argument", commands.Run)
 	}
+
+	fmt.Fprintf(b.out, "\nPost Build Test %d: running container (entrypoing:%s , cmd:%s)\n", index, b.config.Entrypoint, b.config.Cmd)
 
 	containerID, err := b.createContainer(b.config.Entrypoint, b.config.Cmd, true)
 	if err != nil {
@@ -293,11 +301,6 @@ func (b *Builder) handlePostBuildTest(args []string) error {
 		return fmt.Errorf("unable to start container: %s", err)
 	}
 
-	delay := 10000 * time.Millisecond
-	fmt.Println("Sleeping..zzzzzz")
-	time.Sleep(delay)
-	fmt.Println("Wake up")
-
 	createExecConfig := dockerclient2.CreateExecOptions{
 		AttachStdin:  false,
 		AttachStdout: true,
@@ -307,6 +310,8 @@ func (b *Builder) handlePostBuildTest(args []string) error {
 		Container:    containerID,
 		User:         "",
 	}
+
+	fmt.Fprintf(b.out, "Post Build Test %d: executing assert %s\n", index, args)
 
 	createExecResult, err := b.client2.CreateExec(createExecConfig)
 	if err != nil {
