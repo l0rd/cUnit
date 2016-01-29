@@ -35,7 +35,6 @@ func TestInjection(t *testing.T) {
 	expectedEphemerals := []parser.Command{
 		{Args: []string{"FROM", "tomcat:8.0.28-jre8"}},
 		{Args: []string{"RUN", "useradd", "-d", "/home/mario", "-m", "-s", "/bin/bash", "mario"}},
-		{Args: []string{"EPHEMERAL", "getent", "passwd", "mario"}},
 		{Args: []string{"EPHEMERAL", "bash", "-c", "test -f /home/mario/.profile"}},
 		{Args: []string{"EPHEMERAL", "bash", "-c", "test ! -f /usr/local/tomcat/webapps/words"}},
 		{Args: []string{"COPY", "words", "/usr/local/tomcat/webapps/"}},
@@ -117,7 +116,7 @@ func TestAssert2Ephemeral(t *testing.T) {
 	}{
 		{
 			parser.Command{Args: []string{"ASSERT_TRUE", "USER_EXISTS", "tomcat"}},
-			parser.Command{Args: []string{"EPHEMERAL", "getent", "passwd", "tomcat"}},
+			parser.Command{Args: []string{"EPHEMERAL", "bash", "-c", "getent passwd tomcat"}},
 		},
 		{
 			parser.Command{Args: []string{"ASSERT_TRUE", "PROCESS_EXISTS", "java"}},
