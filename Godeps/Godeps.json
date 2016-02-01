@@ -1,5 +1,84 @@
 {
 	"ImportPath": "github.com/l0rd/docker-unit",
 	"GoVersion": "go1.5",
-	"Deps": []
+	"Packages": [
+		"./cmd/docker-unit"
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/Sirupsen/logrus",
+			"Comment": "v0.8.2-12-g2a0a9a1",
+			"Rev": "2a0a9a12ae2892ccfa9ab59c1222e9dcd29f9367"
+		},
+		{
+			"ImportPath": "github.com/docker/distribution/digest",
+			"Comment": "v2.0.0-299-gd0fda14",
+			"Rev": "d0fda14e858625e22e9bfaea4feda20bb8b60130"
+		},
+		{
+			"ImportPath": "github.com/docker/distribution/registry/api/errcode",
+			"Comment": "v2.0.0-299-gd0fda14",
+			"Rev": "d0fda14e858625e22e9bfaea4feda20bb8b60130"
+		},
+		{
+			"ImportPath": "github.com/docker/distribution/registry/api/v2",
+			"Comment": "v2.0.0-299-gd0fda14",
+			"Rev": "d0fda14e858625e22e9bfaea4feda20bb8b60130"
+		},
+		{
+			"ImportPath": "github.com/docker/docker/pkg/fileutils",
+			"Comment": "v1.4.1-4210-gfef0e84",
+			"Rev": "fef0e84b2df31ba12fa46984e3564f9daa6f576d"
+		},
+		{
+			"ImportPath": "github.com/docker/docker/pkg/ioutils",
+			"Comment": "v1.4.1-4210-gfef0e84",
+			"Rev": "fef0e84b2df31ba12fa46984e3564f9daa6f576d"
+		},
+		{
+			"ImportPath": "github.com/docker/docker/pkg/pools",
+			"Comment": "v1.4.1-4210-gfef0e84",
+			"Rev": "fef0e84b2df31ba12fa46984e3564f9daa6f576d"
+		},
+		{
+			"ImportPath": "github.com/docker/docker/pkg/stdcopy",
+			"Comment": "v1.4.1-4210-gfef0e84",
+			"Rev": "fef0e84b2df31ba12fa46984e3564f9daa6f576d"
+		},
+		{
+			"ImportPath": "github.com/docker/docker/pkg/system",
+			"Comment": "v1.4.1-4210-gfef0e84",
+			"Rev": "fef0e84b2df31ba12fa46984e3564f9daa6f576d"
+		},
+		{
+			"ImportPath": "github.com/docker/docker/pkg/tarsum",
+			"Comment": "v1.4.1-4210-gfef0e84",
+			"Rev": "fef0e84b2df31ba12fa46984e3564f9daa6f576d"
+		},
+		{
+			"ImportPath": "github.com/docker/docker/pkg/units",
+			"Comment": "v1.4.1-4210-gfef0e84",
+			"Rev": "fef0e84b2df31ba12fa46984e3564f9daa6f576d"
+		},
+		{
+			"ImportPath": "github.com/fsouza/go-dockerclient",
+			"Rev": "02a8beb401b20e112cff3ea740545960b667eab1"
+		},
+		{
+			"ImportPath": "github.com/gorilla/context",
+			"Rev": "215affda49addc4c8ef7e2534915df2c8c35c6cd"
+		},
+		{
+			"ImportPath": "github.com/gorilla/mux",
+			"Rev": "47e8f450ef38c857cdd922ec08862ca9d65a1c6d"
+		},
+		{
+			"ImportPath": "github.com/jlhawn/tarsum",
+			"Rev": "d07f381518d81a1043f9f1f6e272101b52b85970"
+		},
+		{
+			"ImportPath": "github.com/samalba/dockerclient",
+			"Rev": "12570e600d71374233e5056ba315f657ced496c7"
+		}
+	]
 }
