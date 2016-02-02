@@ -2,7 +2,7 @@
 	"ImportPath": "github.com/l0rd/docker-unit",
 	"GoVersion": "go1.5",
 	"Packages": [
-		"./cmd/docker-unit"
+		"./..."
 	],
 	"Deps": [
 		{
