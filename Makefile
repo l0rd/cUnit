@@ -22,4 +22,5 @@ binaries: image
 test: image
 		@echo "+ $@"
 		$(eval DOCKER_PATH := $(shell which docker))
-		@docker run -it --entrypoint make_tests.sh -v /var/run/docker.sock:/var/run/docker.sock -v ${DOCKER_PATH}:/bin/docker docker-unit-build:${GIT_BRANCH}
+		@docker run -it --entrypoint make_tests.sh docker-unit-build:${GIT_BRANCH}
+		#@docker run -it --entrypoint make_tests.sh -v /var/run/docker.sock:/var/run/docker.sock -v ${DOCKER_PATH}:/bin/docker docker-unit-build:${GIT_BRANCH}
