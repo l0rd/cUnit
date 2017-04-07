@@ -1,9 +1,9 @@
-# Docker Unit  [![Circle CI](https://circleci.com/gh/l0rd/docker-unit.png?style=shield)](https://circleci.com/gh/l0rd/docker-unit)
+# cUnit  [![Circle CI](https://circleci.com/gh/l0rd/docker-unit.png?style=shield)](https://circleci.com/gh/l0rd/docker-unit)
 *The Dockerfile Test Framework*
 
 With Dockerfiles you build your environment. With Docker Unit you test it.
 
-[![docker-unit in action](https://asciinema.org/a/6dnqlny99u5tfk80yhsqykcfz.png)](https://asciinema.org/a/6dnqlny99u5tfk80yhsqykcfz)
+[![cUnit in action](https://asciinema.org/a/6dnqlny99u5tfk80yhsqykcfz.png)](https://asciinema.org/a/6dnqlny99u5tfk80yhsqykcfz)
 
 #### Quickstart
 This is a `Dockerfile`:
@@ -31,10 +31,10 @@ ASSERT_TRUE PROCESS_EXISTS 'java'
 ```
 To test the `Dockerfile`:
 ```sh
-docker-unit .
+cunit .
 ```
 
-#### Docker-unit files syntax
+#### cUnit files syntax
 
 Every test unit in a test file is composed by :
 
@@ -78,7 +78,7 @@ Tests templates are some pre-configured boolean conditions. The following tests-
 Instruction `@INCLUDE` is useful if we need external files to achieve a test. For exemple if the shell script `test_foo.sh` is used to perform a test but is not available inside the Docker image we can include it as follows:
 
 ```
-# Capyfile
+# Dockerfile_test
 @AFTER CREATE_FOO
 @INCLUDE test_foo.sh
 ASSERT_TRUE test_foo.sh
@@ -88,7 +88,7 @@ ASSERT_TRUE test_foo.sh
 Some external shell test frameworks can be made available using the `@IMPORT` instruction. Currently supported frameworks are `serverspec` and `bats`.
 
 ```
-# Capyfile
+# Dockerfile_test
 
 @AFTER CREATE_FOO
 @IMPORT serverspec
@@ -116,9 +116,9 @@ ASSERT_TRUE test_foo.sh
 - [ ] Support @SETUP and @TEARDOWN
 
 
-#### Docker-unit stands on the shoulders of dockramp
+#### cUnit stands on the shoulders of dockramp
 
-Docker-unit codebase is heavely based on [dockramp](https://github.com/jlhawn/dockramp) (it's actually a dockramp fork). Therefore the following docker build features are not implemented.
+cUnit codebase is heavely based on [dockramp](https://github.com/jlhawn/dockramp) (it's actually a dockramp fork). Therefore the following docker build features are not implemented.
 
 - Handle `.dockerignore`.
 - Resolve tag references to digest references using Notary before image pulls.
