@@ -1,4 +1,4 @@
-# cUnit  [![Circle CI](https://circleci.com/gh/l0rd/docker-unit.png?style=shield)](https://circleci.com/gh/l0rd/docker-unit)
+# cUnit 
 *The Dockerfile Test Framework*
 
 With Dockerfiles you build your environment. With Docker Unit you test it.
