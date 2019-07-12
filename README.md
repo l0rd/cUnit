@@ -3,8 +3,6 @@
 
 With Dockerfiles you build your environment. With Docker Unit you test it.
 
-[![cUnit in action](https://asciinema.org/a/6dnqlny99u5tfk80yhsqykcfz.png)](https://asciinema.org/a/6dnqlny99u5tfk80yhsqykcfz)
-
 #### Quickstart
 This is a `Dockerfile`:
 ```Dockerfile
